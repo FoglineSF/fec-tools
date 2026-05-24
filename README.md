@@ -87,6 +87,39 @@ The `schedule_a/by_size/` endpoint is more reliable than the committee
 totals endpoint for unitemized money; the latter has been observed to
 report unitemized as $0 even when there is unitemized money.
 
+### `filing.py` — Download and parse a single FEC electronic filing (.fec file)
+
+Useful when you need data that has been *filed* but not yet *indexed* in the
+searchable API. This matters most for pre-election filings (12P pre-primary
+reports, F6 48-hour contribution notices) where the API lag prevents you
+from seeing the latest contributions in time.
+
+```bash
+python filing.py 1978834 wiener_12p.json
+python filing.py 1978834                  # to stdout
+python filing.py 1978834 spending.json --schedule "Schedule E"
+```
+
+To find a filing's `file_number`, query the filings endpoint:
+
+```bash
+python -c "from fec_client import fec_get; import json; \
+  print(json.dumps(fec_get('/filings/', committee_id='C00909283', \
+  per_page=5, sort='-receipt_date'), indent=2))"
+```
+
+**This is the only script in the toolkit that requires a dependency**: the
+[`fecfile`](https://pypi.org/project/fecfile/) library, which handles the
+FEC's quirky electronic-filing format (plain-text ASCII with field-separator
+delimiters and variable field layouts per schedule subtype). Re-implementing
+that parser would be a substantial undertaking, so we lean on `fecfile`:
+
+```bash
+pip install fecfile     # or: uv add fecfile
+```
+
+Every other script in this toolkit is pure Python stdlib.
+
 ## Module: `fec_client.py`
 
 The shared helper used by the four scripts above. If you want to write
